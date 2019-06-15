@@ -10,7 +10,7 @@
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,8 +19,25 @@
   color: white;
 }
 
+.App-body {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .App-link {
   color: #61dafb;
+}
+
+.App-list {
+  visibility: visible;
+  list-style-type: hebrew;
+  display: flex; 
+  flex: 4;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 @keyframes App-logo-spin {
