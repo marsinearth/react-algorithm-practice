@@ -1,9 +1,17 @@
-import React, { useState, useReducer, useEffect, useCallback, useMemo, memo } from 'react'
+import React, { 
+  useState, 
+  useReducer, 
+  useEffect, 
+  useCallback, 
+  useMemo, 
+  memo 
+} from 'react'
+import styled from 'styled-components'
 import logo from './logo.svg'
 import './App.css'
-import inhabitableZoneNum, { universe, visited } from './dfs/dfsSearch'
+import inhabitableZoneNum, { universe as initialUniverse, visited, visitAttempted } from './dfs/dfsSearch'
 
-const initialState = [
+/* const initialState = [
   {
     title: 'javaScript',
     checked: false
@@ -47,19 +55,7 @@ function reducer(state, action) {
     default:
       return state
   }
-}
-
-function mapReducer(state, action) {
-  switch (action.type) {
-    case 'setZone':
-      return [
-        ...state,
-        ...action.payload
-      ]
-    default:
-      return state
-  }
-}
+} 
 
 function DropDown({ list, dispatch }) {  
   return (
@@ -93,23 +89,99 @@ function DropDown({ list, dispatch }) {
       </div>
     </div>
   )
+} 
+
+const MemoizedDropDown = memo(DropDown) */
+
+function mapReducer(state, action) {
+  switch (action.type) {
+    case 'setZone':
+      return [
+        ...state,
+        ...action.payload
+      ]
+    default:
+      return state
+  }
 }
 
-const MemoizedDropDown = memo(DropDown)
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); 
+  grid-template-rows: repeat(4, 1fr);
+  margin: 2rem auto;
+  border-left: 1px solid dimgray;
+  border-bottom: 1px solid dimgray;
+`
 
-const MapList = ({ zones }) => (
-  <div style={{ display: 'flex', flex: 1, flexDirection: 'row', marginTop: 20 }}>
-    {zones.map((zone, i) => (
-      <span key={i} style={{ color: 'black', fontSize: 12 }}>{zone}</span>
+const Cell = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid dimgray;
+  border-right: 1px solid dimgray;
+  width: 60px;
+  height: 60px; 
+  background-color: ${({ zoneStatus }) => (
+    (!zoneStatus && 'white') ||
+    (zoneStatus === 'i' && 'springgreen') ||
+    (zoneStatus === 'u' && 'lightcoral')
+  )};
+  color: dimgray;
+`
+
+const StepContainer = styled.div`
+  margin: 1rem auto 0 auto;
+  height: 1rem;
+  color: black;
+`
+
+const StepDisplayer = ({ step }) => (
+  <StepContainer>{`STEP: ${step}`}</StepContainer>
+)
+
+const MapGrid = ({ universe, uZones, iZones }) => (
+  <Grid>
+    {universe.map((Row, row) => (
+      Row.map((cell, col) => {
+        const key = `${row}_${col}`
+        let zoneStatus
+        if (iZones && iZones.includes(key)) {
+          zoneStatus = 'i'
+        } else if (uZones && uZones.includes(key)) {
+          zoneStatus = 'u'
+        }
+        return (
+          
+          <Cell
+            key={key}
+            col={col}            
+            row={row}
+            zoneStatus={zoneStatus}    
+          >
+            {cell}
+          </Cell>          
+        )
+      })
     ))}
+  </Grid>
+) 
+
+const MapList = ({ v, va }) => (
+  <div style={{ display: 'flex', flex: 1, flexDirection: 'row', marginTop: 20 }}>
+    {/* zones.map((zone, i) => (
+      <span key={i} style={{ color: 'black', fontSize: 12 }}>{zone}</span>
+    ))*/}
+    {`visited: ${String(visited)}\nvisitAttempted: ${String(visitAttempted)}`}
   </div>
 )
 
 function App() {
   // const [list, dispatch] = useReducer(reducer, initialState)
-  const [zones, setZones] = useState([])
+  const [{ step, universe }, setU] = useState({ step: 0, universe: initialUniverse })
+  const [[uZones, iZones], setZones] = useState([])
   useEffect(() => {
-    setZones([...inhabitableZoneNum(universe)])
+    setZones(inhabitableZoneNum(universe))
   }, [])
   return (
     <div className="App">
@@ -117,11 +189,9 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
       </header>
       <section className="App-body">
-        {/* <MemoizedDropDown 
-          list={list}
-          dispatch={dispatch}
-        /> */}
-        <MapList zones={zones} />
+        <StepDisplayer step={step} />
+        <MapList v={visited} va={visitAttempted} />
+        <MapGrid universe={universe} iZones={iZones} uZones={uZones} />
       </section>
     </div>
   );

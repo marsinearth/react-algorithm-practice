@@ -14,7 +14,8 @@ export const universe = [
   ['Q', 'Q', 'Q']
 ]
 
-// universe.length = 4
+export const visited = universe.map(row => row.map(col => false))
+export const visitAttempted = []
 
 const uninhabitables = ['L', 'Q']
 const inhabitables = ['F', 'H']
@@ -22,13 +23,12 @@ const uninhabitableZoneList = []
 const inhabitableZoneList = []
 const rowAdjCoor = [1, 0, -1, 0]
 const colAdjCoor = [0, -1, 0, 1]
-export const visited = universe.map(row => row.map(col => false))
 
 function isSafe(i, j) {
   return (
-    (i >= 0 && i < universe.length ) &&
+    (i >= 0 && i < universe.length) &&
     (j >= 0 && j < universe[0].length) &&
-    (!visited[i][j] && inhabitables.includes(universe[i][j]))
+    (!visited[i][j] && (inhabitables.includes(universe[i][j]) || uninhabitables.includes(universe[i][j])))
   )
 }
 
@@ -38,36 +38,37 @@ function isAllVisited() {
 
 function dfs(i, j) {
   visited[i][j] = true
+  visitAttempted.push(`${i}_${j}`)
+  const isUninhabitable = uninhabitables.includes(universe[i][j])
   const isInhabitable = inhabitables.includes(universe[i][j])
-  if (isInhabitable) {
-    // console.log(`isUninhabitable: i: ${i}, j: ${j}, `, universe[i][j])    
-    inhabitableZoneList.push(universe[i][j])
+  if (isUninhabitable) {
+    uninhabitableZoneList.push(`${i}_${j}`)
+  } else if (isInhabitable) {   
+    inhabitableZoneList.push(`${i}_${j}`)
   } 
   for (let z = 0; z < 4; z++) {
     const newI = i + rowAdjCoor[z]
-    const newJ = j + colAdjCoor[z]
-    if (isSafe(newI, newJ)) {      
-      // setTimeout(() => {
+    const newJ = j + colAdjCoor[z]  
+    if (isSafe(newI, newJ)) {    
         dfs(newI, newJ)
-      // }, 0) 
     }
   }
 }
 
 export default function inhabitableZoneNum(universe) {
+  let step = 0
   for (let i = 0; i < universe.length; i++) {
     for (let j = 0; j < universe[0].length; j++) {
       const isInhabitable = inhabitables.includes(universe[i][j])
       // console.log({ i, j })
       // console.log({ visited: visited[i][j], isUninhabitable })
-      if (!visited[i][j] && isInhabitable) {
-        // setTimeout(() => {
+      step++
+      if (!visited[i][j]) {
           dfs(i, j)
           console.log({ i, j, zone: universe[i][j] })
-          console.log({ visited, inhabitableZoneList })
-        // }, 0)               
+          console.log({ visited, inhabitableZoneList })           
       }
     }
   }
-  return inhabitableZoneList
+  return [uninhabitableZoneList, inhabitableZoneList]
 }
