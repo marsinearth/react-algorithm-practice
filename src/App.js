@@ -1,109 +1,14 @@
 import React, { 
   useState, 
-  useReducer, 
   useEffect, 
-  useCallback, 
   useMemo, 
   memo 
 } from 'react'
+import RSelect from 'react-select'
 import styled from 'styled-components'
 import logo from './logo.svg'
 import './App.css'
-import inhabitableZoneNum, { universe as initialUniverse, visited, visitAttempted } from './dfs/dfsSearch'
-
-/* const initialState = [
-  {
-    title: 'javaScript',
-    checked: false
-  },
-  {
-    title: 'typeScript',
-    checked: false
-  },
-  {
-    title: 'react.js',
-    checked: false
-  },
-  {
-    title: 'redux.js',
-    checked: false
-  },
-  {
-    title: 'styled-components.js',
-    checked: false
-  },
-]
-
-function reducer(state, action) {
-  switch (action.type) {
-    case 'select':
-        return [
-          ...state.filter(({ title }) => title !== action.title),
-          {
-            title: action.title,
-            checked: true
-          }
-        ]
-    case 'deselect':
-      return [
-        ...state.filter(({ title }) => title !== action.title),
-        {
-          title: action.title,
-          checked: false
-        }
-      ]
-    default:
-      return state
-  }
-} 
-
-function DropDown({ list, dispatch }) {  
-  return (
-    <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-      <div style={{ display: 'flex', flex: 1, justifyContent: 'center' }}>
-        <span>DropDown Sample List</span>
-      </div>
-      <div style={{ display: 'flex', flex: 4, flexDirection: 'row '}}>
-        <ul className="App-list">
-          {list.filter(({ checked }) => !checked).map(({ title }) => (
-            <li 
-              key={title} 
-              onClick={() => dispatch({ type: 'select', title })}
-              style={{ cursor: 'point' }}
-            >
-              {title}
-            </li>
-          ))}
-        </ul>
-        <ul className="App-list" style={{ color: 'red' }}>
-          {list.filter(({ checked }) => checked).map(({ title }) => (
-            <li 
-              key={title} 
-              onClick={() => dispatch({ type: 'select', title })}
-              style={{ cursor: 'point' }}
-            >
-              {title}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
-} 
-
-const MemoizedDropDown = memo(DropDown) */
-
-function mapReducer(state, action) {
-  switch (action.type) {
-    case 'setZone':
-      return [
-        ...state,
-        ...action.payload
-      ]
-    default:
-      return state
-  }
-}
+import inhabitableZoneNum, { universe } from './searchAlgorithms'
 
 const Grid = styled.div`
   display: grid;
@@ -125,34 +30,51 @@ const Cell = styled.div`
   background-color: ${({ zoneStatus }) => (
     (!zoneStatus && 'white') ||
     (zoneStatus === 'i' && 'springgreen') ||
-    (zoneStatus === 'u' && 'lightcoral')
+    (zoneStatus === 'u' && 'lightcoral') ||
+    (zoneStatus === 'v' && 'dimgray')
   )};
-  color: dimgray;
+  color: ${({ zoneStatus }) => zoneStatus === 'v' ? 'whitesmoke' : 'dimgray'};
 `
 
-const StepContainer = styled.div`
+const Header = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   margin: 1rem auto 0 auto;
-  height: 1rem;
+  height: 3rem;  
+`
+
+const Select = styled(RSelect)`
+  min-width: 8rem;
+  margin-bottom: 1rem;
+`
+
+const Step = styled.div`
   color: black;
 `
 
-const StepDisplayer = ({ step }) => (
-  <StepContainer>{`STEP: ${step}`}</StepContainer>
-)
+function getZoneStatus(visited, step, iZones, uZones, key) {
+  let zoneStatus
+  if (visited.length) {
+    if (visited[step - 1] === key) {
+      zoneStatus = 'v'
+    } else if (iZones && iZones.includes(key) && visited.includes(key)) {
+      zoneStatus = 'i'
+    } else if (uZones && uZones.includes(key) && visited.includes(key)) {
+      zoneStatus = 'u'
+    }
+  }
+  return zoneStatus
+}
 
-const MapGrid = ({ universe, uZones, iZones }) => (
+const MapGrid = memo(({ universe, uZones, iZones, visited, step }) => (
   <Grid>
     {universe.map((Row, row) => (
       Row.map((cell, col) => {
         const key = `${row}_${col}`
-        let zoneStatus
-        if (iZones && iZones.includes(key)) {
-          zoneStatus = 'i'
-        } else if (uZones && uZones.includes(key)) {
-          zoneStatus = 'u'
-        }
-        return (
-          
+        const zoneStatus = useMemo(() => getZoneStatus(visited, step, iZones, uZones, key), [step, iZones, uZones, key])
+        return (          
           <Cell
             key={key}
             col={col}            
@@ -165,36 +87,54 @@ const MapGrid = ({ universe, uZones, iZones }) => (
       })
     ))}
   </Grid>
-) 
+))
 
-const MapList = ({ v, va }) => (
-  <div style={{ display: 'flex', flex: 1, flexDirection: 'row', marginTop: 20 }}>
-    {/* zones.map((zone, i) => (
-      <span key={i} style={{ color: 'black', fontSize: 12 }}>{zone}</span>
-    ))*/}
-    {`visited: ${String(visited)}\nvisitAttempted: ${String(visitAttempted)}`}
-  </div>
-)
+const options = [
+  { value: 0, label: 'BFS' },
+  { value: 1, label: 'DFS' },
+]
 
 function App() {
-  // const [list, dispatch] = useReducer(reducer, initialState)
-  const [{ step, universe }, setU] = useState({ step: 0, universe: initialUniverse })
-  const [[uZones, iZones], setZones] = useState([])
+  const [[uZones, iZones, visitAttempted], setZones] = useState([])
+  const [{ step, visited }, setVisited] = useState({ step: 0, visited: [] })
+  const [selected, setSelected] = useState(options[0])
   useEffect(() => {
-    setZones(inhabitableZoneNum(universe))
-  }, [])
+    setZones(inhabitableZoneNum(universe, selected.value))
+    setVisited({ step: 0, visited: [] })
+  }, [selected])
+  useEffect(() => {
+    if (visitAttempted && step <= visitAttempted.length) {
+      const interval = setInterval(() => {        
+        setVisited(({ step, visited }) => {
+          const visiting = visitAttempted[step]
+          const newVisited = [...visited, visiting]
+          return { 
+            step: step + 1,
+            visited: newVisited 
+          }
+        })
+      }, 500)
+      return () => clearInterval(interval)
+    }    
+  }, [visitAttempted, step])
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
       </header>
       <section className="App-body">
-        <StepDisplayer step={step} />
-        <MapList v={visited} va={visitAttempted} />
-        <MapGrid universe={universe} iZones={iZones} uZones={uZones} />
+        <Header>
+          <Select
+            value={selected}
+            onChange={setSelected}
+            options={options}
+          />
+          <Step>{`STEP: ${step}`}</Step>
+        </Header>
+        <MapGrid universe={universe} iZones={iZones} uZones={uZones} visited={visited} step={step} />
       </section>
     </div>
   );
 }
 
-export default App;
+export default memo(App);
