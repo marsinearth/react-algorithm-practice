@@ -54,26 +54,26 @@ const Step = styled.div`
   color: black;
 `
 
-function getZoneStatus(visited, step, iZones, uZones, key) {
+function getZoneStatus(visited, step, iZones, key) {
   let zoneStatus
   if (visited.length) {
     if (visited[step - 1] === key) {
       zoneStatus = 'v'
     } else if (iZones && iZones.includes(key) && visited.includes(key)) {
       zoneStatus = 'i'
-    } else if (uZones && uZones.includes(key) && visited.includes(key)) {
+    } else if (visited.includes(key)) {
       zoneStatus = 'u'
     }
   }
   return zoneStatus
 }
 
-const MapGrid = memo(({ universe, uZones, iZones, visited, step }) => (
+const MapGrid = memo(({ universe, iZones, visited, step }) => (
   <Grid>
     {universe.map((Row, row) => (
       Row.map((cell, col) => {
         const key = `${row}_${col}`
-        const zoneStatus = useMemo(() => getZoneStatus(visited, step, iZones, uZones, key), [step, iZones, uZones, key])
+        const zoneStatus = useMemo(() => getZoneStatus(visited, step, iZones, key), [step, iZones, key])
         return (          
           <Cell
             key={key}
@@ -95,7 +95,7 @@ const options = [
 ]
 
 function App() {
-  const [[uZones, iZones, visitAttempted], setZones] = useState([])
+  const [[iZones, visitAttempted], setZones] = useState([])
   const [{ step, visited }, setVisited] = useState({ step: 0, visited: [] })
   const [selected, setSelected] = useState(options[0])
   useEffect(() => {
@@ -131,7 +131,7 @@ function App() {
           />
           <Step>{`STEP: ${step}`}</Step>
         </Header>
-        <MapGrid universe={universe} iZones={iZones} uZones={uZones} visited={visited} step={step} />
+        <MapGrid universe={universe} iZones={iZones} visited={visited} step={step} />
       </section>
     </div>
   );

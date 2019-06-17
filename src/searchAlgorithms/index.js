@@ -24,11 +24,16 @@ export const rowAdjCoord = [1, 0, -1, 0]
 export const colAdjCoord = [0, -1, 0, 1]
 
 export function isSafe(i, j, v) {
-  return (
+  if (
     (i >= 0 && i < universe.length) &&
     (j >= 0 && j < universe[0].length) &&
-    (!v[i][j] && (inhabitables.includes(universe[i][j]) || uninhabitables.includes(universe[i][j])))
-  )
+    (!v[i][j] && (inhabitables.includes(universe[i][j])))
+  ) {
+    if (!inhabitableZoneList.includes(`${i}_${j}`)) {
+      inhabitableZoneList.push(`${i}_${j}`)
+    }    
+    return true 
+  }  
 }
 
 export default function inhabitableZoneNum(universe, method) {
@@ -45,5 +50,6 @@ export default function inhabitableZoneNum(universe, method) {
       }
     }
   }
-  return [uninhabitableZoneList, inhabitableZoneList, visitedAttempt]
+  console.log({ inhabitableZoneList })
+  return [inhabitableZoneList, visitedAttempt]
 }
