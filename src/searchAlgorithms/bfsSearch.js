@@ -13,8 +13,8 @@ export default function bfs(i, j, va, v) {
     const popped = queue.pop()   
     const [k, l] = popped.split('_')
     for (let z = 0; z < 4; z++) {
-      const newK = Number(k) + colAdjCoord[z]
-      const newL = Number(l) + rowAdjCoord[z]
+      const newK = Number(k) + rowAdjCoord[z]
+      const newL = Number(l) + colAdjCoord[z]
       if (isSafe(newK, newL, v)) {    
         queue.push(`${newK}_${newL}`)
         v[newK][newL] = true
