@@ -9,6 +9,9 @@ import dfs from './dfsSearch'
  * Q. how many zones are inhabitable from given universe?
  */
 
+export const uninhabitables = ['L', 'Q']
+export const inhabitables = ['F', 'H']
+
 export const universe = [
   ['L', 'Q', 'F'],
   ['L', 'Q', 'F'],
@@ -16,40 +19,50 @@ export const universe = [
   ['Q', 'Q', 'Q']
 ]
 
-export const uninhabitables = ['L', 'Q']
-export const inhabitables = ['F', 'H']
-export const uninhabitableZoneList = []
-export const inhabitableZoneList = []
+export const generateRandomUniverse = (rowNum, colNum) => {
+  const terrains = [...uninhabitables, ...inhabitables]  
+  return [...Array(rowNum)].reduce((tally, rowUndefined, rowIndex) => {
+    const newRow = [...Array(colNum)].map((colUndefined, colIndex) => {
+      const randomIndex = Math.floor(Math.random() * terrains.length)
+      return terrains[randomIndex]
+    })
+    tally.push(newRow)
+    return tally
+  }, [])
+}
+
 export const rowAdjCoord = [1, 0, -1, 0]
 export const colAdjCoord = [0, -1, 0, 1]
 
-export function isSafe(i, j, v) {
+export function isSafe(i, j, v, univ, inHabList) {
   if (
-    (i >= 0 && i < universe.length) &&
-    (j >= 0 && j < universe[0].length) &&
-    (!v[i][j] && (inhabitables.includes(universe[i][j])))
+    (i >= 0 && i < univ.length) &&
+    (j >= 0 && j < univ[i].length) &&
+    (!v[i][j] && (inhabitables.includes(univ[i][j])))
   ) {
-    if (!inhabitableZoneList.includes(`${i}_${j}`)) {
-      inhabitableZoneList.push(`${i}_${j}`)
+    console.log({ inhabitables, 'universe[i][j]': univ[i][j] })
+    if (!inHabList.includes(`${i}_${j}`)) {
+      inHabList.push(`${i}_${j}`)
     }    
     return true 
   }  
 }
 
-export default function inhabitableZoneNum(universe, method) {
+export default function inhabitableZoneNum(univ, method) {  
   const visitedAttempt = []
-  const visited = universe.map(row => row.map(col => false))
-  for (let i = 0; i < universe.length; i++) {
-    for (let j = 0; j < universe[0].length; j++) {
+  // const uninhabitableZoneList = []
+  const inhabitableZoneList = []
+  const visited = univ.map(row => row.map(col => false))
+  for (let i = 0; i < univ.length; i++) {
+    for (let j = 0; j < univ[i].length; j++) {
       if (!visited[i][j]) {
         if (method) {
-          dfs(i, j, visitedAttempt, visited)   
+          dfs(i, j, visitedAttempt, visited, univ, inhabitableZoneList)   
         } else {
-          bfs(i, j, visitedAttempt, visited)   
+          bfs(i, j, visitedAttempt, visited, univ, inhabitableZoneList)   
         }          
       }
     }
   }
-  console.log({ inhabitableZoneList })
   return [inhabitableZoneList, visitedAttempt]
 }

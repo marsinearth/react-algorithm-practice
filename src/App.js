@@ -1,14 +1,14 @@
 import React, { 
   useState, 
   useEffect, 
-  useMemo, 
+  useCallback,
   memo 
 } from 'react'
 import RSelect from 'react-select'
 import styled from 'styled-components'
 import logo from './logo.svg'
 import './App.css'
-import inhabitableZoneNum, { universe } from './searchAlgorithms'
+import inhabitableZoneNum, { universe as initialUniverse, generateRandomUniverse } from './searchAlgorithms'
 
 const Grid = styled.div`
   display: grid;
@@ -38,6 +38,7 @@ const Cell = styled.div`
 
 const Header = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -52,6 +53,17 @@ const Select = styled(RSelect)`
 
 const Step = styled.div`
   color: black;
+`
+
+const UniverseGenerateButton = styled.button`
+  display: flex;
+  padding: 0.5rem;
+  background-color: lightgray;
+  color: dimgray;
+  font-weight: bold;
+  border-radius: 0.2rem;
+  border-width: 1px;
+  margin-bottom: 1rem;
 `
 
 function getZoneStatus(visited, step, iZones, key) {
@@ -73,7 +85,7 @@ const MapGrid = memo(({ universe, iZones, visited, step }) => (
     {universe.map((Row, row) => (
       Row.map((cell, col) => {
         const key = `${row}_${col}`
-        const zoneStatus = useMemo(() => getZoneStatus(visited, step, iZones, key), [step, iZones, key])
+        const zoneStatus = getZoneStatus(visited, step, iZones, key)
         return (          
           <Cell
             key={key}
@@ -91,17 +103,18 @@ const MapGrid = memo(({ universe, iZones, visited, step }) => (
 
 const options = [
   { value: 0, label: 'BFS' },
-  { value: 1, label: 'DFS' },
+  { value: 1, label: 'DFS' }
 ]
 
 function App() {
+  const [universe, setUniverse] = useState(initialUniverse)
   const [[iZones, visitAttempted], setZones] = useState([])
   const [{ step, visited }, setVisited] = useState({ step: 0, visited: [] })
   const [selected, setSelected] = useState(options[0])
   useEffect(() => {
     setZones(inhabitableZoneNum(universe, selected.value))
-    setVisited({ step: 0, visited: [] })
-  }, [selected])
+    setVisited({ step: 0, visited: [] })    
+  }, [universe, selected])
   useEffect(() => {
     if (visitAttempted && step <= visitAttempted.length) {
       const interval = setInterval(() => {        
@@ -114,6 +127,7 @@ function App() {
           }
         })
       }, 500)
+      console.log({ step, visited })
       return () => clearInterval(interval)
     }    
   }, [visitAttempted, step])
@@ -124,6 +138,12 @@ function App() {
       </header>
       <section className="App-body">
         <Header>
+          <UniverseGenerateButton onClick={useCallback(() => {
+            const newRandomUniverse = generateRandomUniverse(4, 3)
+            setUniverse(newRandomUniverse)
+          }, [])}>
+            Generate Another Universe!
+          </UniverseGenerateButton>
           <Select
             value={selected}
             onChange={setSelected}
