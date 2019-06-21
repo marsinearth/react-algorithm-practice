@@ -1,0 +1,19 @@
+{
+  "env": {
+    "development": {
+      "plugins": [
+        ["babel-plugin-styled-components", { "displayName": true, "fileName": true } ]
+      ],
+      "presets": ["next/babel"]
+    },
+    "production": {
+      "plugins": [
+        ["babel-plugin-styled-components", { "displayName": true, "fileName": true } ]
+      ],
+      "presets": ["next/babel"]
+    }
+  },
+  "plugins": [
+    ["babel-plugin-styled-components", { "displayName": true, "fileName": true } ]
+  ]
+}
