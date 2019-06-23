@@ -34,35 +34,41 @@ export const generateRandomUniverse = (rowNum, colNum) => {
 export const rowAdjCoord = [1, 0, -1, 0]
 export const colAdjCoord = [0, -1, 0, 1]
 
-export function isSafe(i, j, v, univ, inHabList) {
+export function isSafe(i, j, v, va, univ, inHabList) {
   if (
     (i >= 0 && i < univ.length) &&
     (j >= 0 && j < univ[i].length) &&
     (!v[i][j] && (inhabitables.includes(univ[i][j])))
   ) {
-    console.log({ inhabitables, 'universe[i][j]': univ[i][j] })
+    va.push(`${i}_${j}`)
     if (!inHabList.includes(`${i}_${j}`)) {
       inHabList.push(`${i}_${j}`)
-    }    
-    return true 
-  }  
+    }
+    return true
+  }
 }
 
 export default function inhabitableZoneNum(univ, method) {  
   const visitedAttempt = []
   // const uninhabitableZoneList = []
+  const inhabitableIslands = []
   const inhabitableZoneList = []
   const visited = univ.map(row => row.map(col => false))
   for (let i = 0; i < univ.length; i++) {
     for (let j = 0; j < univ[i].length; j++) {
       if (!visited[i][j]) {
-        if (method) {
-          dfs(i, j, visitedAttempt, visited, univ, inhabitableZoneList)   
-        } else {
-          bfs(i, j, visitedAttempt, visited, univ, inhabitableZoneList)   
-        }          
+        visitedAttempt.push(`${i}_${j}`)
+        if (inhabitables.includes(univ[i][j])) {
+          if (method) {
+            dfs(i, j, visitedAttempt, visited, univ, inhabitableZoneList)            
+          } else {
+            bfs(i, j, visitedAttempt, visited, univ, inhabitableZoneList)   
+          }
+          inhabitableIslands.push(`${i}_${j}`)
+        }      
       }
     }
   }
-  return [inhabitableZoneList, visitedAttempt]
+  console.log({ universe: univ, inhabitableZoneList, visitedAttempt, inhabitableIslands })
+  return [inhabitableZoneList, visitedAttempt, inhabitableIslands]
 }
