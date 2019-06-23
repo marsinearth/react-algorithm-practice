@@ -4,14 +4,15 @@ import React, {
   useCallback,
   memo 
 } from 'react'
+import { useImmerReducer } from 'use-immer'
 import RSelect from 'react-select'
 import styled from 'styled-components'
 import inhabitableZoneNum, { universe as initialUniverse, generateRandomUniverse } from './findAnIsland'
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr); 
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-columns: repeat(${({ cols }) => cols}, 1fr); 
+  grid-template-rows: repeat(${({ rows }) => rows}, 1fr);
   margin: 2rem auto;
   border-left: 1px solid dimgray;
   border-bottom: 1px solid dimgray;
@@ -44,13 +45,33 @@ export const Header = styled.div`
   height: 3rem;  
 `
 
+const DoubleSelectContainer = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  width: 12rem;
+`
+
 export const Select = styled(RSelect)`
-  width: ${({ long }) => long ? 15 : 10}rem;
+  width: ${({ long, short }) => (
+    (long && 15) ||
+    (short && 5) ||
+    10
+  )}rem;
   margin-bottom: 1rem;
 `
 
-const Step = styled.div`
+const Status = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+`
+
+const StatusText = styled.span`
   color: black;
+  margin-bottom: 0.5rem;
 `
 
 const UniverseGenerateButton = styled.button`
@@ -78,8 +99,8 @@ function getZoneStatus(visited, step, iZones, key) {
   return zoneStatus
 }
 
-const MapGrid = memo(({ universe, iZones, visited, step }) => (
-  <Grid>
+const MapGrid = memo(({ universe, iZones, visited, step, rows, cols }) => (
+  <Grid rows={rows} cols={cols}>
     {universe.map((Row, row) => (
       Row.map((cell, col) => {
         const key = `${row}_${col}`
@@ -104,38 +125,106 @@ const options = [
   { value: 1, label: 'DFS' }
 ]
 
+const RowOptions = [
+  { value: 1, label: 1 },
+  { value: 2, label: 2 },
+  { value: 3, label: 3 },
+  { value: 4, label: 4 },
+  { value: 5, label: 5 },
+  { value: 6, label: 6 },
+  { value: 7, label: 7 },
+  { value: 8, label: 8 },
+  { value: 9, label: 9 },
+  { value: 10, label: 10 }
+]
+
+const ColOptions = [
+  { value: 1, label: 1 },
+  { value: 2, label: 2 },
+  { value: 3, label: 3 },
+  { value: 4, label: 4 },
+  { value: 5, label: 5 },
+  { value: 6, label: 6 },
+  { value: 7, label: 7 },
+  { value: 8, label: 8 },
+  { value: 9, label: 9 },
+  { value: 10, label: 10 }
+]
+
+const rowColReducer = (draft, action) => {
+  const { type, rows, cols } = action
+  switch (type) {
+    case 'rowSelect':
+      draft.rows = { value: rows, label: rows }
+      break
+    case 'colSelect':
+      draft.cols = { value: cols, label: cols }
+      break
+    default:
+      break
+  }
+}
+
+const initialRowColState = { rows: { value: 4, label: 4 }, cols: { value: 3, label: 3 } }
+
 export default function IslandGrid() {
-  const [universe, setUniverse] = useState(initialUniverse)
-  const [[iZones, visitAttempted], setZones] = useState([])
-  const [{ step, visited }, setVisited] = useState({ step: 0, visited: [] })
+  const [{ universe, univRows, univCols }, setUniverse] = useState({ 
+    universe: initialUniverse, 
+    univRows: initialRowColState.rows.value,
+    univCols: initialRowColState.cols.value
+  })
+  const [[iZones, visitAttempted, islands], setZones] = useState([])
+  const [{ step, visited, numOfIslands }, setVisited] = useState({ step: 0, visited: [], numOfIslands: 0 })
   const [selected, setSelected] = useState(options[0])
+  const [{ rows, cols }, rowColDispatch] = useImmerReducer(rowColReducer, initialRowColState)
   useEffect(() => {
     setZones(inhabitableZoneNum(universe, selected.value))
-    setVisited({ step: 0, visited: [] })    
+    setVisited({ step: 0, visited: [], numOfIslands: 0 })
   }, [universe, selected])
   useEffect(() => {
     if (visitAttempted && step <= visitAttempted.length) {
       const interval = setInterval(() => {        
-        setVisited(({ step, visited }) => {
-          const visiting = visitAttempted[step]
-          const newVisited = [...visited, visiting]
-          return { 
-            step: step + 1,
-            visited: newVisited 
-          }
+        const visiting = visitAttempted[step]
+        const newVisited = [...visited, visiting]
+        setVisited({ 
+          step: step + 1,
+          visited: newVisited,
+          numOfIslands: islands.includes(visiting) ? numOfIslands + 1 : numOfIslands
         })
       }, 500)
-      console.log({ step, visited })
       return () => clearInterval(interval)
     }    
-  }, [visitAttempted, visited, step])
+  }, [visitAttempted, step, islands, visited, numOfIslands])
+  console.log({ step, visited, numOfIslands })
   return (
     <>
       <Header>
+        <DoubleSelectContainer>
+          <Status>
+            <StatusText>Rows</StatusText>
+            <Select
+              short
+              value={rows}
+              onChange={({ value: rows }) => rowColDispatch({ type: 'rowSelect', rows })}
+              options={RowOptions}
+            />
+          </Status>
+          <Status>
+            <StatusText>Columns</StatusText>
+            <Select
+              short
+              value={cols}
+              onChange={({ value: cols }) => rowColDispatch({ type: 'colSelect', cols })}
+              options={ColOptions}
+            />
+          </Status>
+        </DoubleSelectContainer>
         <UniverseGenerateButton onClick={useCallback(() => {
-          const newRandomUniverse = generateRandomUniverse(4, 3)
-          setUniverse(newRandomUniverse)
-        }, [])}>
+          const univRows = rows.value
+          const univCols = cols.value
+          const newRandomUniverse = generateRandomUniverse(univRows, univCols)
+          setUniverse({ universe: newRandomUniverse, univRows, univCols })
+        }, [rows, cols])}>
           Generate Another Universe!
         </UniverseGenerateButton>
         <Select
@@ -143,9 +232,19 @@ export default function IslandGrid() {
           onChange={setSelected}
           options={options}
         />
-        <Step>{`STEP: ${step}`}</Step>
+        <Status>
+          <StatusText>{`NUMBER OF ISLANDS: ${numOfIslands}`}</StatusText>
+          <StatusText>{`STEP: ${step}`}</StatusText>          
+        </Status>
       </Header>
-      <MapGrid universe={universe} iZones={iZones} visited={visited} step={step} />
+      <MapGrid        
+        universe={universe} 
+        iZones={iZones} 
+        visited={visited} 
+        step={step}
+        rows={univRows}
+        cols={univCols}         
+      />
     </>
   )
 }

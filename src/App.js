@@ -26,9 +26,7 @@ function App() {
           <Select
             long
             value={problem}
-            onChange={option => {
-              setProblem(draft => option)
-            }}
+            onChange={setProblem}
             options={LoadedProblems}
           />
         </Header>
