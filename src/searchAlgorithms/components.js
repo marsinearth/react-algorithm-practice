@@ -120,25 +120,12 @@ const MapGrid = memo(({ universe, iZones, visited, step, rows, cols }) => (
   </Grid>
 ))
 
-const options = [
+const algorithmOptions = [
   { value: 0, label: 'BFS' },
   { value: 1, label: 'DFS' }
 ]
 
-const RowOptions = [
-  { value: 1, label: 1 },
-  { value: 2, label: 2 },
-  { value: 3, label: 3 },
-  { value: 4, label: 4 },
-  { value: 5, label: 5 },
-  { value: 6, label: 6 },
-  { value: 7, label: 7 },
-  { value: 8, label: 8 },
-  { value: 9, label: 9 },
-  { value: 10, label: 10 }
-]
-
-const ColOptions = [
+const selectOptions = [
   { value: 1, label: 1 },
   { value: 2, label: 2 },
   { value: 3, label: 3 },
@@ -175,7 +162,7 @@ export default function IslandGrid() {
   })
   const [[iZones, visitAttempted, islands], setZones] = useState([])
   const [{ step, visited, numOfIslands }, setVisited] = useState({ step: 0, visited: [], numOfIslands: 0 })
-  const [selected, setSelected] = useState(options[0])
+  const [selected, setSelected] = useState(algorithmOptions[0])
   const [{ rows, cols }, rowColDispatch] = useImmerReducer(rowColReducer, initialRowColState)
   useEffect(() => {
     setZones(inhabitableZoneNum(universe, selected.value))
@@ -206,7 +193,7 @@ export default function IslandGrid() {
               short
               value={rows}
               onChange={({ value: rows }) => rowColDispatch({ type: 'rowSelect', rows })}
-              options={RowOptions}
+              options={selectOptions}
             />
           </Status>
           <Status>
@@ -215,7 +202,7 @@ export default function IslandGrid() {
               short
               value={cols}
               onChange={({ value: cols }) => rowColDispatch({ type: 'colSelect', cols })}
-              options={ColOptions}
+              options={selectOptions}
             />
           </Status>
         </DoubleSelectContainer>
@@ -230,7 +217,7 @@ export default function IslandGrid() {
         <Select
           value={selected}
           onChange={setSelected}
-          options={options}
+          options={algorithmOptions}
         />
         <Status>
           <StatusText>{`NUMBER OF ISLANDS: ${numOfIslands}`}</StatusText>

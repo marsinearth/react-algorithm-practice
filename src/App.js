@@ -1,4 +1,4 @@
-import React, { Suspense, memo, lazy,useState, useEffect } from 'react'
+import React, { Suspense, memo, lazy, useState, useEffect } from 'react'
 import logo from './logo.svg'
 import './App.css'
 import { Header, Select } from './searchAlgorithms/components'
